@@ -120,6 +120,8 @@ async def check_new_emails():
 async def main(context):
     context.log("Running main function...")
     # await connect_to_mailbox()
-    connect_to_mailbox()
+    unread_emails = fetch_unread_emails()
     context.log("Main function finished.")
-    return context.res.json({}, 200)
+    return context.res.json({
+        "unread_emails_len": len(unread_emails)
+    }, 200)
