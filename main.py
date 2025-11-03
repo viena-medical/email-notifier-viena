@@ -117,10 +117,7 @@ async def check_new_emails():
         await send_telegram_message(text)
 
 
-def main(context):
+async def main(context):
     context.log("Running main function...")
-    # Get the current running loop (Ap
-    loop = asyncio.get_running_loop()
-    #Schedule and wait for the async
-    result = loop.run_until_complete(check_new_emails())
+    await check_new_emails()
     context.log("Main function finished.")
