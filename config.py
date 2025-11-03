@@ -1,3 +1,5 @@
+import os
+
 IMAP_SERVER = os.getenv("IMAP_SERVER", "")
 IMAP_PORT = os.getenv("IMAP_PORT", "")
 EMAIL_LOGIN = os.getenv("EMAIL_LOGIN", "")
