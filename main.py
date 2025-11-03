@@ -12,7 +12,7 @@ from . import config
 bot = aiogram.Bot(token=config.TELEGRAM_BOT_TOKEN)
 
 
-def connect_to_mailbox():
+def connect_to_mailbox(context):
     """
     Подключается к Яндекс.Почте через IMAP, используя пароль приложения.
     """
@@ -22,16 +22,18 @@ def connect_to_mailbox():
         mail.select("inbox")
         return mail
     except imaplib.IMAP4.error as e:
-        logger.error(f"❌ Ошибка аутентификации в IMAP: {e}")
+        context.log(f"❌ Ошибка аутентификации в IMAP: {e}")
         return None
 
 
-def fetch_unread_emails():
-    mail = connect_to_mailbox()
+def fetch_unread_emails(context):
+    mail = connect_to_mailbox(context)
     if not mail:
         return []
 
     all_email_ids = set()  # набор всех непрочитанных ID
+
+    context.log(config.SENDER_EMAILS)
 
     for sender in config.SENDER_EMAILS:
         status, messages = mail.search(None, f'(UNSEEN FROM "{sender}")')
@@ -120,7 +122,7 @@ async def check_new_emails():
 async def main(context):
     context.log("Running main function...")
     # await connect_to_mailbox()
-    unread_emails = fetch_unread_emails()
+    unread_emails = fetch_unread_emails(context)
     context.log("Main function finished.")
     return context.res.json({
         "unread_emails_len": len(unread_emails)
