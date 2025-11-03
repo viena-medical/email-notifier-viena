@@ -121,4 +121,4 @@ async def main(context):
     context.log("Running main function...")
     await check_new_emails()
     context.log("Main function finished.")
-    return {}
+    return context.res.json({})
