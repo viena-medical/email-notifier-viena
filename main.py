@@ -8,6 +8,7 @@ import aiogram
 import aiohttp
 from loguru import logger
 import config
+from appwrite.functions import AppwriteFunction
 
 bot = aiogram.Bot(token=config.TELEGRAM_BOT_TOKEN)
 
@@ -117,7 +118,7 @@ async def check_new_emails():
         await send_telegram_message(text)
 
 
-def main(context):
-    print("Running main function...")
+def main(context: AppwriteFunction):
+    context.log("Running main function...")
     asyncio.run(check_new_emails())
-    print("Main function finished.")
+    context.log("Main function finished.")
