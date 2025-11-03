@@ -7,7 +7,7 @@ import html
 import aiogram
 import aiohttp
 from loguru import logger
-import config
+from . import config
 from appwrite.functions import AppwriteFunction
 
 bot = aiogram.Bot(token=config.TELEGRAM_BOT_TOKEN)
