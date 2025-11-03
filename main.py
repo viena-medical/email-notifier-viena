@@ -17,7 +17,7 @@ def connect_to_mailbox():
     Подключается к Яндекс.Почте через IMAP, используя пароль приложения.
     """
     try:
-        mail = imaplib.IMAP4_SSL(config.IMAP_SERVER, config.IMAP_PORT)
+        mail = imaplib.IMAP4_SSL(config.IMAP_SERVER, config.IMAP_PORT, timeout=10)
         mail.login(config.EMAIL_LOGIN, config.EMAIL_PASSWORD)
         mail.select("inbox")
         return mail
