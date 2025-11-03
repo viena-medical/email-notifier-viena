@@ -118,4 +118,6 @@ async def check_new_emails():
 
 
 def main(context):
+    print("Running main function...")
     asyncio.run(check_new_emails())
+    print("Main function finished.")
