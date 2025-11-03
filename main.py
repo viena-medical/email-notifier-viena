@@ -117,5 +117,5 @@ async def check_new_emails():
         await send_telegram_message(text)
 
 
-if __name__ == "__main__":
+def main(context):
     asyncio.run(check_new_emails())
