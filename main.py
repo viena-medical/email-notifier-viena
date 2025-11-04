@@ -105,8 +105,8 @@ async def send_telegram_message(text):
                 logger.error(f"Ошибка при отправке в Telegram: {await resp.text()}")
 
 
-async def check_new_emails():
-    unread_emails = fetch_unread_emails()
+async def check_new_emails(context):
+    unread_emails = fetch_unread_emails(context)
     if not unread_emails:
         logger.info("Нет новых писем.")
         return
