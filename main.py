@@ -57,43 +57,55 @@ async def fetch_unread_emails(context):
                 context.error(f"❌ Ошибка получения письма {email_id}")
                 continue
 
-            for msg_data in response.lines:
-                msg = email.message_from_bytes(msg_data)
+            # Find the message data in the response (skip protocol lines)
+            msg_data = None
+            for line in response.lines:
+                # Skip protocol response lines and look for the actual message bytes
+                if isinstance(line, bytes) and not line.startswith(b'*') and not line.startswith(b')') and len(line) > 10:
+                    # This is likely the message data (RFC822 content)
+                    msg_data = line
+                    break
 
-                # Safely decode subject
-                subject_header = msg.get("Subject")
-                if subject_header:
-                    subject, encoding = decode_header(subject_header)[0]
-                    subject = (
-                        subject.decode(encoding or "utf-8")
-                        if isinstance(subject, bytes)
-                        else subject
-                    )
-                else:
-                    subject = "Без темы"
+            if msg_data is None:
+                context.error(f"❌ Не удалось найти данные сообщения для письма {email_id}")
+                continue
 
-                from_email = msg.get("From")
-                sender_name, sender_email = parseaddr(from_email or "")
-                context.log(f"📧 Письмо от: {sender_name} <{sender_email}>, тема: {subject[:50]}...")
+            msg = email.message_from_bytes(msg_data)
 
-                body = ""
-                if msg.is_multipart():
-                    for part in msg.walk():
-                        content_type = part.get_content_type()
-                        if content_type == "text/plain":
-                            payload = part.get_payload(decode=True)
-                            if payload:
-                                body = payload.decode("utf-8", errors="ignore")
-                            break
-                else:
-                    payload = msg.get_payload(decode=True)
-                    if payload:
-                        body = payload.decode("utf-8", errors="ignore")
-
-                unread_emails.append(
-                    {"subject": subject, "from": sender_email, "body": body[:500]}
+            # Safely decode subject
+            subject_header = msg.get("Subject")
+            if subject_header:
+                subject, encoding = decode_header(subject_header)[0]
+                subject = (
+                    subject.decode(encoding or "utf-8")
+                    if isinstance(subject, bytes)
+                    else subject
                 )
-                context.log(f"✅ Письмо обработано: {subject[:30]}...")
+            else:
+                subject = "Без темы"
+
+            from_email = msg.get("From")
+            sender_name, sender_email = parseaddr(from_email or "")
+            context.log(f"📧 Письмо от: {sender_name} <{sender_email}>, тема: {subject[:50]}...")
+
+            body = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    content_type = part.get_content_type()
+                    if content_type == "text/plain":
+                        payload = part.get_payload(decode=True)
+                        if payload:
+                            body = payload.decode("utf-8", errors="ignore")
+                        break
+            else:
+                payload = msg.get_payload(decode=True)
+                if payload:
+                    body = payload.decode("utf-8", errors="ignore")
+
+            unread_emails.append(
+                {"subject": subject, "from": sender_email, "body": body[:500]}
+            )
+            context.log(f"✅ Письмо обработано: {subject[:30]}...")
 
             # Помечаем письмо как прочитанное
             await imap.store(email_id, "+FLAGS", "\\Seen")
