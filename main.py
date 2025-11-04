@@ -9,7 +9,7 @@ import aiohttp
 from loguru import logger
 from . import config
 
-bot = aiogram.Bot(token=config.TELEGRAM_BOT_TOKEN)
+# bot = aiogram.Bot(token=config.TELEGRAM_BOT_TOKEN)
 
 
 def connect_to_mailbox(context):
