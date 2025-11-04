@@ -40,8 +40,7 @@ def fetch_unread_emails(context):
     all_email_ids = set()  # набор всех непрочитанных ID
     context.log(f"📋 Настроенные отправители: {config.SENDER_EMAILS}")
 
-    #for sender in config.SENDER_EMAILS:
-    for sender in []:
+    for sender in config.SENDER_EMAILS:
         context.log(f"🔎 Поиск непрочитанных писем от: {sender}")
         status, messages = mail.search(None, f'(UNSEEN FROM "{sender}")')
         if status == "OK":
