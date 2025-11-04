@@ -52,14 +52,14 @@ async def fetch_unread_emails(context):
 
         for email_id in all_email_ids:
             context.log(f"📨 Обработка письма ID: {email_id}")
-            response = await imap.fetch(email_id, "(RFC822)")
+            response = await imap.fetch(email_id, "(BODY[])")
             if response.result != "OK":
                 context.error(f"❌ Ошибка получения письма {email_id}")
                 continue
 
-            msg_data = response.lines[1]
+            # msg_data = response.lines[1]
 
-            msg = email.message_from_bytes(msg_data)
+            msg = email.message_from_bytes(response)
 
             # Safely decode subject
             subject_header = msg.get("Subject")
@@ -97,8 +97,8 @@ async def fetch_unread_emails(context):
             context.log(f"✅ Письмо обработано: {subject[:30]}...")
 
             # Помечаем письмо как прочитанное
-            await imap.store(email_id, "+FLAGS", "\\Seen")
-            context.log(f"👁️ Письмо {email_id} помечено как прочитанное")
+            # await imap.store(email_id, "+FLAGS", "\\Seen")
+            # context.log(f"👁️ Письмо {email_id} помечено как прочитанное")
 
         context.log(f"🔚 Завершение поиска писем. Обработано: {len(unread_emails)} писем")
         return unread_emails
