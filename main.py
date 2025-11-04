@@ -107,7 +107,7 @@ async def send_telegram_message(text):
 async def check_new_emails(context):
     unread_emails = fetch_unread_emails(context)
     if not unread_emails:
-        logger.info("Нет новых писем.")
+        context.log("Нет новых писем.")
         return
 
     for email_data in unread_emails:
