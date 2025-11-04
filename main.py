@@ -23,7 +23,6 @@ def connect_to_mailbox(context):
         return mail
     except imaplib.IMAP4.error as e:
         context.log(f"❌ Ошибка аутентификации в IMAP: {e}")
-        logger.error(f"IMAP authentication failed: {e}")
         return None
     except Exception as e:
         context.log(f"❌ Неожиданная ошибка при подключении к IMAP: {e}")
@@ -34,7 +33,7 @@ def fetch_unread_emails(context):
     context.log("🔍 Начало поиска непрочитанных писем")
     mail = connect_to_mailbox(context)
     if not mail:
-        context.log("❌ Не удалось подключиться к почтовому ящику")
+        context.error("❌ Не удалось подключиться к почтовому ящику")
         return []
 
     all_email_ids = set()  # набор всех непрочитанных ID
@@ -49,8 +48,7 @@ def fetch_unread_emails(context):
             for eid in email_ids:
                 all_email_ids.add(eid)
         else:
-            logger.warning(f"Ошибка поиска писем от {sender}. Пропускаем...")
-            context.log(f"⚠️ Ошибка поиска писем от {sender}")
+            context.log(f"⚠️ Ошибка поиска писем от {sender}. Пропускаем...")
 
     context.log(f"📊 Всего уникальных непрочитанных писем: {len(all_email_ids)}")
     unread_emails = []
@@ -60,7 +58,7 @@ def fetch_unread_emails(context):
         context.log(f"📨 Обработка письма ID: {email_id}")
         status, msg_data = mail.fetch(email_id, "(RFC822)")
         if status != "OK":
-            context.log(f"❌ Ошибка получения письма {email_id}")
+            context.error(f"❌ Ошибка получения письма {email_id}")
             continue
 
         for response_part in msg_data:
@@ -155,27 +153,23 @@ async def check_new_emails(context):
             await send_telegram_message(text)
             context.log(f"✅ Письмо {i} успешно отправлено в Telegram")
         except Exception as e:
-            context.log(f"❌ Ошибка отправки письма {i} в Telegram: {e}")
-            logger.error(f"Failed to send email {i} to Telegram: {e}")
+            context.error(f"❌ Ошибка отправки письма {i} в Telegram: {e}")
 
     context.log(f"🎉 Завершена обработка {len(unread_emails)} писем")
 
 
 async def main(context):
     context.log("🚀 Запуск основной функции email-notifier")
-    logger.info("Appwrite function started")
 
     try:
         await check_new_emails(context)
         context.log("✅ Основная функция выполнена успешно")
-        logger.info("Appwrite function completed successfully")
         return context.res.json({
             "success": True,
             "message": "Email check completed"
         }, 200)
     except Exception as e:
         context.log(f"❌ Критическая ошибка в основной функции: {e}")
-        logger.error(f"Critical error in main function: {e}")
         return context.res.json({
             "success": False,
             "error": str(e)
