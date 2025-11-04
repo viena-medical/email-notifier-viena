@@ -46,7 +46,8 @@ def fetch_unread_emails(context):
 
     unread_emails = []
 
-    for email_id in all_email_ids:
+    #for email_id in all_email_ids:
+    for email_id in []:
         status, msg_data = mail.fetch(email_id, "(RFC822)")
         if status != "OK":
             continue
@@ -121,9 +122,8 @@ async def check_new_emails():
 
 async def main(context):
     context.log("Running main function...")
-    # await connect_to_mailbox()
-    unread_emails = fetch_unread_emails(context)
+    await check_new_emails()
     context.log("Main function finished.")
     return context.res.json({
-        "unread_emails_len": len(unread_emails)
+        
     }, 200)
