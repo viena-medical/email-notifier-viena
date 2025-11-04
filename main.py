@@ -58,12 +58,17 @@ async def fetch_unread_emails(context):
                 continue
 
             # Find the message data in the response (skip protocol lines)
+            context.log(f"📋 Response lines count: {len(response.lines)}")
+            for i, line in enumerate(response.lines):
+                context.log(f"📋 Line {i}: {line[:100]}... (type: {type(line)}, len: {len(line) if isinstance(line, (bytes, str)) else 'N/A'})")
+
             msg_data = None
             for line in response.lines:
                 # Skip protocol response lines and look for the actual message bytes
                 if isinstance(line, bytes) and not line.startswith(b'*') and not line.startswith(b')') and len(line) > 10:
                     # This is likely the message data (RFC822 content)
                     msg_data = line
+                    context.log(f"📋 Found potential message data: {line[:100]}...")
                     break
 
             if msg_data is None:
