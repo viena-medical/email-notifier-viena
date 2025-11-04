@@ -108,8 +108,8 @@ async def fetch_unread_emails(context):
             context.log(f"✅ Письмо обработано: {subject[:30]}...")
 
             # Помечаем письмо как прочитанное
-            # await imap.store(email_id, "+FLAGS", "\\Seen")
-            # context.log(f"👁️ Письмо {email_id} помечено как прочитанное")
+            await imap.store(email_id, "+FLAGS", "\\Seen")
+            context.log(f"👁️ Письмо {email_id} помечено как прочитанное")
 
         context.log(f"🔚 Завершение поиска писем. Обработано: {len(unread_emails)} писем")
         return unread_emails
@@ -159,22 +159,17 @@ async def check_new_emails(context):
     for i, email_data in enumerate(unread_emails):
         context.log(f"📤 Обработка письма {i}/{len(unread_emails)}: {email_data['subject'][:30]}...")
 
-        # Log all fields of the text variable components
-        context.log(f"📧 Email from: {email_data['from']}")
-        context.log(f"📧 Email subject: {email_data['subject']}")
-        context.log(f"📧 Email body: {email_data['body']}")
+        text = (
+            f"📩 Новое письмо от {html.escape(email_data['from'])}\n"
+            f"Тема: {html.escape(email_data['subject'])}\n\n"
+            f"Текст: {html.escape(email_data['body'])}"
+        )
 
-        # text = (
-        #     f"📩 Новое письмо от {html.escape(email_data['from'])}\n"
-        #     f"Тема: {html.escape(email_data['subject'])}\n\n"
-        #     f"Текст: {html.escape(email_data['body'])}"
-        # )
-
-        # try:
-        #     await send_telegram_message(context, text)
-        #     context.log(f"✅ Письмо {i} успешно отправлено в Telegram")
-        # except Exception as e:
-        #     context.error(f"❌ Ошибка отправки письма {i} в Telegram: {e}")
+        try:
+            await send_telegram_message(context, text)
+            context.log(f"✅ Письмо {i} успешно отправлено в Telegram")
+        except Exception as e:
+            context.error(f"❌ Ошибка отправки письма {i} в Telegram: {e}")
 
     context.log(f"🎉 Завершена обработка {len(unread_emails)} писем")
 
