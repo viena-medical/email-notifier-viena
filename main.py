@@ -57,9 +57,20 @@ async def fetch_unread_emails(context):
                 context.error(f"❌ Ошибка получения письма {email_id}")
                 continue
 
-            # msg_data = response.lines[1]
+            # Find the message data in the response (skip protocol lines)
+            context.log(f"📋 Response lines count: {len(response.lines)}")
+            for i, line in enumerate(response.lines):
+                context.log(f"📋 Line {i}: {line[:100]}... (type: {type(line)}, len: {len(line) if isinstance(line, (bytes, str)) else 'N/A'})")
 
-            msg = email.message_from_bytes(response)
+            # Extract message data - handle both bytes and bytearray
+            msg_data = None
+            if isinstance(response.lines[1], bytearray):
+                msg_data = bytes(response.lines[1])
+            if msg_data is None:
+                context.error(f"❌ Не удалось найти данные сообщения для письма {email_id}")
+                continue
+
+            msg = email.message_from_bytes(msg_data)
 
             # Safely decode subject
             subject_header = msg.get("Subject")
