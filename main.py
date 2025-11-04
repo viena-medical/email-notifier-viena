@@ -52,8 +52,7 @@ async def fetch_unread_emails(context):
         context.log(f"📊 Всего уникальных непрочитанных писем: {len(all_email_ids)}")
         unread_emails = []
 
-        #for email_id in all_email_ids:
-        for email_id in []:
+        for email_id in all_email_ids:
             context.log(f"📨 Обработка письма ID: {email_id}")
             response = await mailbox.fetch(email_id, "(RFC822)")
             if response.result != "OK":
@@ -103,9 +102,9 @@ async def fetch_unread_emails(context):
         await mailbox.logout()
 
 
-async def send_telegram_message(text):
-    logger.info("📤 Отправка сообщения в Telegram")
-    logger.debug(f"Текст сообщения: {text[:100]}...")
+async def send_telegram_message(context, text):
+    context.log("📤 Отправка сообщения в Telegram")
+    context.log(f"Текст сообщения: {text[:100]}...")
 
     async with aiohttp.ClientSession() as session:
         url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -118,16 +117,16 @@ async def send_telegram_message(text):
         }
 
         try:
-            logger.debug("Выполнение HTTP запроса к Telegram API")
+            context.log("Выполнение HTTP запроса к Telegram API")
             async with session.post(url, json=payload) as resp:
                 if resp.status == 200:
-                    logger.info("✅ Сообщение успешно отправлено в Telegram")
-                    logger.debug(f"Ответ Telegram API: {await resp.text()}")
+                    context.log("✅ Сообщение успешно отправлено в Telegram")
+                    context.log(f"Ответ Telegram API: {await resp.text()}")
                 else:
                     error_text = await resp.text()
-                    logger.error(f"❌ Ошибка при отправке в Telegram (статус {resp.status}): {error_text}")
+                    context.error(f"❌ Ошибка при отправке в Telegram (статус {resp.status}): {error_text}")
         except Exception as e:
-            logger.error(f"❌ Исключение при отправке в Telegram: {e}")
+            context.error(f"❌ Исключение при отправке в Telegram: {e}")
 
 
 async def check_new_emails(context):
@@ -150,7 +149,7 @@ async def check_new_emails(context):
         )
 
         try:
-            await send_telegram_message(text)
+            await send_telegram_message(context, text)
             context.log(f"✅ Письмо {i} успешно отправлено в Telegram")
         except Exception as e:
             context.error(f"❌ Ошибка отправки письма {i} в Telegram: {e}")
