@@ -156,7 +156,7 @@ async def check_new_emails(context):
         )
 
         try:
-            await send_telegram_message(text)
+            await send_telegram_message(context, text)
             context.log(f"✅ Письмо {i} успешно отправлено в Telegram")
         except Exception as e:
             context.error(f"❌ Ошибка отправки письма {i} в Telegram: {e}")
