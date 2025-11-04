@@ -99,7 +99,7 @@ async def fetch_unread_emails(context):
         return unread_emails
 
     finally:
-        mailbox.close()
+        await mailbox.close()
         await mailbox.logout()
 
 
