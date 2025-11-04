@@ -12,14 +12,14 @@ async def connect_to_mailbox(context):
     """
     try:
         context.log(f"🔌 Подключение к IMAP серверу {config.IMAP_SERVER}:{config.IMAP_PORT}")
-        mailbox = aioimaplib.IMAP4_SSL(config.IMAP_SERVER, config.IMAP_PORT)
-        await mailbox.wait_hello_from_server()
+        imap = aioimaplib.IMAP4_SSL(config.IMAP_SERVER, config.IMAP_PORT)
+        await imap.wait_hello_from_server()
         context.log("🔐 Выполнение аутентификации...")
-        await mailbox.login(config.EMAIL_LOGIN, config.EMAIL_PASSWORD)
+        await imap.login(config.EMAIL_LOGIN, config.EMAIL_PASSWORD)
         context.log("📁 Выбор папки inbox...")
-        await mailbox.select("inbox")
+        await imap.select("inbox")
         context.log("✅ Успешное подключение к почтовому ящику")
-        return mailbox
+        return imap
     except Exception as e:
         context.log(f"❌ Ошибка при подключении к IMAP: {e}")
         return None
@@ -27,8 +27,8 @@ async def connect_to_mailbox(context):
 
 async def fetch_unread_emails(context):
     context.log("🔍 Начало поиска непрочитанных писем")
-    mailbox = await connect_to_mailbox(context)
-    if not mailbox:
+    imap = await connect_to_mailbox(context)
+    if not imap:
         context.error("❌ Не удалось подключиться к почтовому ящику")
         return []
 
@@ -38,7 +38,7 @@ async def fetch_unread_emails(context):
     try:
         for sender in config.SENDER_EMAILS:
             context.log(f"🔎 Поиск непрочитанных писем от: {sender}")
-            response = await mailbox.search(f'(UNSEEN FROM "{sender}")')
+            response = await imap.search(f'(UNSEEN FROM "{sender}")')
             if response.result == "OK":
                 email_ids = response.lines[0].decode().split()
                 context.log(f"📧 Найдено {len(email_ids)} непрочитанных писем от {sender}")
@@ -52,7 +52,7 @@ async def fetch_unread_emails(context):
 
         for email_id in all_email_ids:
             context.log(f"📨 Обработка письма ID: {email_id}")
-            response = await mailbox.fetch(email_id, "(RFC822)")
+            response = await imap.fetch(email_id, "(RFC822)")
             if response.result != "OK":
                 context.error(f"❌ Ошибка получения письма {email_id}")
                 continue
@@ -96,15 +96,15 @@ async def fetch_unread_emails(context):
                 context.log(f"✅ Письмо обработано: {subject[:30]}...")
 
             # Помечаем письмо как прочитанное
-            await mailbox.store(email_id, "+FLAGS", "\\Seen")
+            await imap.store(email_id, "+FLAGS", "\\Seen")
             context.log(f"👁️ Письмо {email_id} помечено как прочитанное")
 
         context.log(f"🔚 Завершение поиска писем. Обработано: {len(unread_emails)} писем")
         return unread_emails
 
     finally:
-        await mailbox.close()
-        await mailbox.logout()
+        await imap.close()
+        await imap.logout()
 
 
 async def send_telegram_message(context, text):
