@@ -1,11 +1,9 @@
-import asyncio
 import email
 from email.header import decode_header
 from email.utils import parseaddr
 import html
 import aiohttp
 import aioimaplib
-from loguru import logger
 from . import config
 
 async def connect_to_mailbox(context):
@@ -76,7 +74,7 @@ async def fetch_unread_emails(context):
 
                 from_email = msg.get("From")
                 sender_name, sender_email = parseaddr(from_email or "")
-                context.log(f"📧 Письмо от: {sender_email}, тема: {subject[:50]}...")
+                context.log(f"📧 Письмо от: {sender_name} <{sender_email}>, тема: {subject[:50]}...")
 
                 body = ""
                 if msg.is_multipart():
@@ -146,20 +144,25 @@ async def check_new_emails(context):
 
     context.log(f"📨 Найдено {len(unread_emails)} новых писем для отправки в Telegram")
 
-    for i, email_data in enumerate(unread_emails, 1):
+    for i, email_data in enumerate(unread_emails):
         context.log(f"📤 Обработка письма {i}/{len(unread_emails)}: {email_data['subject'][:30]}...")
 
-        text = (
-            f"📩 Новое письмо от {html.escape(email_data['from'])}\n"
-            f"Тема: {html.escape(email_data['subject'])}\n\n"
-            f"Текст: {html.escape(email_data['body'])}"
-        )
+        # Log all fields of the text variable components
+        context.log(f"📧 Email from: {email_data['from']}")
+        context.log(f"📧 Email subject: {email_data['subject']}")
+        context.log(f"📧 Email body: {email_data['body']}")
 
-        try:
-            await send_telegram_message(context, text)
-            context.log(f"✅ Письмо {i} успешно отправлено в Telegram")
-        except Exception as e:
-            context.error(f"❌ Ошибка отправки письма {i} в Telegram: {e}")
+        # text = (
+        #     f"📩 Новое письмо от {html.escape(email_data['from'])}\n"
+        #     f"Тема: {html.escape(email_data['subject'])}\n\n"
+        #     f"Текст: {html.escape(email_data['body'])}"
+        # )
+
+        # try:
+        #     await send_telegram_message(context, text)
+        #     context.log(f"✅ Письмо {i} успешно отправлено в Telegram")
+        # except Exception as e:
+        #     context.error(f"❌ Ошибка отправки письма {i} в Telegram: {e}")
 
     context.log(f"🎉 Завершена обработка {len(unread_emails)} писем")
 
