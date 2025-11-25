@@ -2,6 +2,7 @@ import email
 from email.header import decode_header
 from email.utils import parseaddr
 import html
+import datetime
 import aiohttp
 import aioimaplib
 from . import config
@@ -35,10 +36,14 @@ async def fetch_unread_emails(context):
     all_email_ids = set()  # набор всех непрочитанных ID
     context.log(f"📋 Настроенные отправители: {config.SENDER_EMAILS}")
 
+    # Calculate date 24 hours ago for filtering recent emails
+    date_24h_ago = datetime.datetime.now() - datetime.timedelta(hours=24)
+    date_str = date_24h_ago.strftime("%d-%b-%Y")
+    
     try:
         for sender in config.SENDER_EMAILS:
             context.log(f"🔎 Поиск непрочитанных писем от: {sender}")
-            response = await imap.search(f'(UNSEEN FROM "{sender}")')
+            response = await imap.search(None, f'(SINCE "{date_str}" UNSEEN FROM "{sender}")')
             if response.result == "OK":
                 email_ids = response.lines[0].decode().split()
                 context.log(f"📧 Найдено {len(email_ids)} непрочитанных писем от {sender}")
