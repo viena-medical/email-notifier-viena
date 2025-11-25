@@ -37,7 +37,7 @@ async def fetch_unread_emails(context):
     context.log(f"📋 Настроенные отправители: {config.SENDER_EMAILS}")
 
     # Calculate date 24 hours ago for filtering recent emails
-    date_24h_ago = datetime.datetime.now() - datetime.timedelta(hours=24)
+    date_24h_ago = datetime.datetime.now() - datetime.timedelta(hours=72)
     date_str = date_24h_ago.strftime("%d-%b-%Y")
     
     try:
