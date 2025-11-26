@@ -5,6 +5,8 @@ import html
 import datetime
 import aiohttp
 import imaplib
+import time
+import asyncio
 from . import config
 
 def connect_to_mailbox(context):
