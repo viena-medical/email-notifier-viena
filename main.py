@@ -51,7 +51,7 @@ def fetch_unread_emails(context):
                 for eid in email_ids:
                     all_email_ids.add(eid)
             else:
-                context.log(f"❌ Ошибка поиска писем от {sender}: status={status}, data={data}")
+                context.error(f"❌ Ошибка поиска писем от {sender}: status={status}, data={data}")
 
         context.log(f"📊 Всего уникальных непрочитанных писем: {len(all_email_ids)}")
         unread_emails = []
@@ -141,7 +141,7 @@ async def send_telegram_message(context, text):
             async with session.post(url, json=payload) as resp:
                 if resp.status == 200:
                     context.log("✅ Сообщение успешно отправлено в Telegram")
-                    context.log(f"Ответ Telegram API: {await resp.text()}")
+                    # context.log(f"Ответ Telegram API: {await resp.text()}")
                 else:
                     error_text = await resp.text()
                     context.error(f"❌ Ошибка при отправке в Telegram (статус {resp.status}): {error_text}")
@@ -188,7 +188,7 @@ async def main(context):
             "message": "Email check completed"
         }, 200)
     except Exception as e:
-        context.log(f"❌ Критическая ошибка в основной функции: {e}")
+        context.error(f"❌ Критическая ошибка в основной функции: {e}")
         return context.res.json({
             "success": False,
             "error": str(e)
