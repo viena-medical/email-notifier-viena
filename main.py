@@ -43,7 +43,7 @@ async def fetch_unread_emails(context):
     try:
         for sender in config.SENDER_EMAILS:
             context.log(f"🔎 Поиск непрочитанных писем от: {sender}")
-            response = await imap.search(None, f'(SINCE "{date_str}" UNSEEN FROM "{sender}")')
+            response = await imap.search(None, f'(SINCE {date_str} UNSEEN FROM {sender})')
             if response.result == "OK":
                 email_ids = response.lines[0].decode().split()
                 context.log(f"📧 Найдено {len(email_ids)} непрочитанных писем от {sender}")
