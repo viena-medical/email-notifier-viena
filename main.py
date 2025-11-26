@@ -4,21 +4,20 @@ from email.utils import parseaddr
 import html
 import datetime
 import aiohttp
-import aioimaplib
+import imaplib
 from . import config
 
-async def connect_to_mailbox(context):
+def connect_to_mailbox(context):
     """
     Подключается к Яндекс.Почте через IMAP, используя пароль приложения.
     """
     try:
         context.log(f"🔌 Подключение к IMAP серверу {config.IMAP_SERVER}:{config.IMAP_PORT}")
-        imap = aioimaplib.IMAP4_SSL(config.IMAP_SERVER, config.IMAP_PORT)
-        await imap.wait_hello_from_server()
+        imap = imaplib.IMAP4_SSL(config.IMAP_SERVER, config.IMAP_PORT)
         context.log("🔐 Выполнение аутентификации...")
-        await imap.login(config.EMAIL_LOGIN, config.EMAIL_PASSWORD)
+        imap.login(config.EMAIL_LOGIN, config.EMAIL_PASSWORD)
         context.log("📁 Выбор папки inbox...")
-        await imap.select("inbox")
+        imap.select("inbox")
         context.log("✅ Успешное подключение к почтовому ящику")
         return imap
     except Exception as e:
@@ -26,9 +25,9 @@ async def connect_to_mailbox(context):
         return None
 
 
-async def fetch_unread_emails(context):
+def fetch_unread_emails(context):
     context.log("🔍 Начало поиска непрочитанных писем")
-    imap = await connect_to_mailbox(context)
+    imap = connect_to_mailbox(context)
     if not imap:
         context.error("❌ Не удалось подключиться к почтовому ящику")
         return []
@@ -39,43 +38,40 @@ async def fetch_unread_emails(context):
     # Calculate date 24 hours ago for filtering recent emails
     date_24h_ago = datetime.datetime.now() - datetime.timedelta(hours=72)
     date_str = date_24h_ago.strftime("%d-%b-%Y")
-    
+
     try:
         for sender in config.SENDER_EMAILS:
             context.log(f"🔎 Поиск непрочитанных писем от: {sender}")
             search_criteria = f'(UNSEEN FROM {sender} SINCE {date_str})'
             context.log(f"🔍 Критерий поиска: {search_criteria}")
-            response = await imap.search(None, search_criteria)
-            if response.result == 'OK':
-                email_ids = response.lines[0].decode().split()
+            status, data = imap.search(None, search_criteria)
+            if status == 'OK':
+                email_ids = data[0].decode().split()
                 context.log(f"📧 Найдено {len(email_ids)} непрочитанных писем от {sender}")
                 for eid in email_ids:
                     all_email_ids.add(eid)
             else:
-                context.log(f"❌ Ошибка поиска писем от {sender}: result={response.result}, lines={response.lines}")
+                context.log(f"❌ Ошибка поиска писем от {sender}: status={status}, data={data}")
 
         context.log(f"📊 Всего уникальных непрочитанных писем: {len(all_email_ids)}")
         unread_emails = []
 
         for email_id in all_email_ids:
             context.log(f"📨 Обработка письма ID: {email_id}")
-            response = await imap.fetch(email_id, "(BODY[])")
-            if response.result != "OK":
+            status, data = imap.fetch(email_id, "(BODY[])")
+            if status != "OK":
                 context.error(f"❌ Ошибка получения письма {email_id}")
                 continue
 
-            # Find the message data in the response (skip protocol lines)
-            context.log(f"📋 Response lines count: {len(response.lines)}")
-            for i, line in enumerate(response.lines):
-                context.log(f"📋 Line {i}: {line[:100]}... (type: {type(line)}, len: {len(line) if isinstance(line, (bytes, str)) else 'N/A'})")
-
-            # Extract message data - handle both bytes and bytearray
-            msg_data = None
-            if isinstance(response.lines[1], bytearray):
-                msg_data = bytes(response.lines[1])
-            if msg_data is None:
-                context.error(f"❌ Не удалось найти данные сообщения для письма {email_id}")
+            # Extract message data
+            if not data:
+                context.error(f"❌ Нет данных для письма {email_id}")
                 continue
+            msg_data = data[0][1]
+            if isinstance(msg_data, bytes):
+                pass
+            else:
+                msg_data = bytes(msg_data)
 
             msg = email.message_from_bytes(msg_data)
 
@@ -115,15 +111,15 @@ async def fetch_unread_emails(context):
             context.log(f"✅ Письмо обработано: {subject[:30]}...")
 
             # Помечаем письмо как прочитанное
-            await imap.store(email_id, "+FLAGS", "\\Seen")
+            imap.store(email_id, "+FLAGS", "\\Seen")
             context.log(f"👁️ Письмо {email_id} помечено как прочитанное")
 
         context.log(f"🔚 Завершение поиска писем. Обработано: {len(unread_emails)} писем")
         return unread_emails
 
     finally:
-        await imap.close()
-        await imap.logout()
+        imap.close()
+        imap.logout()
 
 
 async def send_telegram_message(context, text):
@@ -155,7 +151,7 @@ async def send_telegram_message(context, text):
 
 async def check_new_emails(context):
     context.log("🔄 Начало проверки новых писем")
-    unread_emails = await fetch_unread_emails(context)
+    unread_emails = fetch_unread_emails(context)
 
     if not unread_emails:
         context.log("📭 Нет новых писем для обработки")
