@@ -18,7 +18,7 @@ async def connect_to_mailbox(context):
         context.log("🔐 Выполнение аутентификации...")
         await imap.login(config.EMAIL_LOGIN, config.EMAIL_PASSWORD)
         context.log("📁 Выбор папки inbox...")
-        await imap.select("inbox", readonly=True)
+        await imap.select("inbox")
         context.log("✅ Успешное подключение к почтовому ящику")
         return imap
     except Exception as e:
