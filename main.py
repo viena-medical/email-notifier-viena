@@ -184,12 +184,10 @@ async def main(context):
         await check_new_emails(context)
         context.log("✅ Основная функция выполнена успешно")
         return context.res.json({
-            "success": True,
-            "message": "Email check completed"
+            "success": True
         }, 200)
     except Exception as e:
         context.error(f"❌ Критическая ошибка в основной функции: {e}")
         return context.res.json({
-            "success": False,
-            "error": str(e)
+            "success": False
         }, 500)
