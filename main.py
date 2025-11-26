@@ -52,7 +52,7 @@ async def fetch_unread_emails(context):
                 for eid in email_ids:
                     all_email_ids.add(eid)
             else:
-                context.log(f"⚠️ Ошибка поиска писем от {sender}. Пропускаем...")
+                context.log(f"❌ Ошибка поиска писем от {sender}: result={response.result}, lines={response.lines}")
 
         context.log(f"📊 Всего уникальных непрочитанных писем: {len(all_email_ids)}")
         unread_emails = []
