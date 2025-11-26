@@ -159,6 +159,9 @@ async def check_new_emails(context):
 
     context.log(f"📨 Найдено {len(unread_emails)} новых писем для отправки в Telegram")
 
+    # Rate limiting: max 10 messages per second
+    last_send_time = None
+
     for i, email_data in enumerate(unread_emails):
         context.log(f"📤 Обработка письма {i}/{len(unread_emails)}: {email_data['subject'][:30]}...")
 
@@ -167,6 +170,16 @@ async def check_new_emails(context):
             f"Тема: {html.escape(email_data['subject'])}\n\n"
             f"Текст: {html.escape(email_data['body'])}"
         )
+
+        # Enforce rate limit
+        current_time = time.time()
+        if last_send_time is not None:
+            elapsed = current_time - last_send_time
+            if elapsed < 0.1:
+                sleep_time = 0.1 - elapsed
+                context.log(f"⏱️ Rate limiting: sleeping for {sleep_time:.2f} seconds")
+                await asyncio.sleep(sleep_time)
+        last_send_time = time.time()
 
         try:
             await send_telegram_message(context, text)
